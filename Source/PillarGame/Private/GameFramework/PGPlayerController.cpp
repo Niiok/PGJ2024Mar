@@ -7,35 +7,30 @@
 #include "Misc/MessageDialog.h"
 #endif 
 
-void APGPlayerController::SpawnPillar_Server_Implementation(FTransform InTransform, int32 InClassIndex)
+void APGPlayerController::SpawnActor_Server_Implementation(int32 InClassIndex, const FTransform& InTransform)
 {
 	UClass* SpawnClass = SpawnClasses.IsValidIndex(InClassIndex) ? SpawnClasses[InClassIndex] : nullptr;
 
 	if (SpawnClass != nullptr)
 	{
-		AActor* SpawnedActor = GetWorld()->SpawnActor(SpawnClass);
-		SpawnedActor->SetReplicates(true);
-		SpawnedActor->SetReplicatingMovement(true);
+		SpawnActor_Internal(SpawnClass, InTransform);
 	}
 }
 
-bool APGPlayerController::SpawnPillar_Blueprint(FTransform InTransform, TSubclassOf<AActor> InClass)
+AActor* APGPlayerController::SpawnActor_Blueprint(TSubclassOf<AActor> InClass, const FTransform& InTransform)
 {
 	if (HasAuthority())
 	{
 		if (InClass != nullptr)
 		{
-			AActor* SpawnedActor = GetWorld()->SpawnActor(InClass);
-			SpawnedActor->SetReplicates(true);
-			SpawnedActor->SetReplicatingMovement(true);
-			return true;
+			return SpawnActor_Internal(InClass, InTransform);
 		}
 		else
 		{
 #if UE_EDITOR
 			FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("This Actor doesn't exist in PGPlayerController!")));
 #endif
-			return false;
+			return nullptr;
 		}
 	}
 	else
@@ -44,15 +39,15 @@ bool APGPlayerController::SpawnPillar_Blueprint(FTransform InTransform, TSubclas
 
 		if (ClassIndex > INDEX_NONE)
 		{
-			SpawnPillar_Server(InTransform, ClassIndex);
-			return true;
+			SpawnActor_Server(ClassIndex, InTransform);
+			return nullptr;
 		}
 		else
 		{
 #if UE_EDITOR
 			FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("This Actor doesn't exist in PGPlayerController!")));
 #endif
-			return false;
+			return nullptr;
 		}
 	}
 }
