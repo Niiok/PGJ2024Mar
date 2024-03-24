@@ -12,7 +12,12 @@
 
 bool APGGameState::IsPlayerTurn(class APGPlayerController* InPC) const
 {
-	return PlayerInTurn.IsValid() == false || InPC&& InPC->GetUniqueNetId() == PlayerInTurn;
+	if (PlayerInTurn.IsValid() == false && HasAuthority())
+	{
+		return true;
+	}
+
+	return InPC && InPC->GetUniqueNetId() == PlayerInTurn;
 }
 
 void APGGameState::Multicast_StartPlacing_Implementation(FUniqueNetIdRepl InPlacingPlayer, FDateTime InExpiration)
@@ -21,8 +26,7 @@ void APGGameState::Multicast_StartPlacing_Implementation(FUniqueNetIdRepl InPlac
 	PlayerInTurn = InPlacingPlayer;
 	State = EPGState::Placing;
 
-	auto LocalPlayer = GetGameInstance()->FindLocalPlayerFromUniqueNetId(InPlacingPlayer.GetUniqueNetId());
-	if (auto PGPC = LocalPlayer ? Cast<APGPlayerController>(LocalPlayer->GetPlayerController(GetWorld())) : nullptr)
+	if (auto PGPC = Cast<APGPlayerController>(GetGameInstance()->GetFirstLocalPlayerController()))
 	{
 		PGPC->OnStartPlacing(this);
 	}
@@ -34,8 +38,7 @@ void APGGameState::Multicast_StartJudging_Implementation(FUniqueNetIdRepl InJudg
 	PlayerInTurn = InJudgingPlayer;
 	State = EPGState::Judging;
 
-	auto LocalPlayer = GetGameInstance()->FindLocalPlayerFromUniqueNetId(InJudgingPlayer.GetUniqueNetId());
-	if (auto PGPC = LocalPlayer ? Cast<APGPlayerController>(LocalPlayer->GetPlayerController(GetWorld())) : nullptr)
+	if (auto PGPC = Cast<APGPlayerController>(GetGameInstance()->GetFirstLocalPlayerController()))
 	{
 		PGPC->OnStartJudging(this);
 	}
@@ -46,8 +49,7 @@ void APGGameState::Multicast_EndGame_Implementation(FUniqueNetIdRepl InLosePlaye
 	PlayerInTurn = InLosePlayer;
 	State = EPGState::End;
 
-	auto LocalPlayer = GetGameInstance()->FindLocalPlayerFromUniqueNetId(InLosePlayer.GetUniqueNetId());
-	if (auto PGPC = LocalPlayer ? Cast<APGPlayerController>(LocalPlayer->GetPlayerController(GetWorld())) : nullptr)
+	if (auto PGPC = Cast<APGPlayerController>(GetGameInstance()->GetFirstLocalPlayerController()))
 	{
 		PGPC->OnEndGame(this);
 	}

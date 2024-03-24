@@ -15,6 +15,8 @@ class PILLARGAME_API APGGameMode : public AGameModeBase
 	GENERATED_BODY()
 
 public:
+	void PostLogin(APlayerController* NewPlayer) override;
+
 	class APGGameState* GetGS() const;
 
 	UFUNCTION(BlueprintCallable)

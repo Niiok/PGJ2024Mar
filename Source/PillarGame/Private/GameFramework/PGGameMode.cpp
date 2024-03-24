@@ -9,6 +9,17 @@
 
 
 
+void APGGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+
+	auto PGPC = Cast<APGPlayerController>(NewPlayer);
+	if (PGPC && PlayerInTurn.IsValid() == false && NewPlayer->IsLocalController())
+	{
+		PlayerInTurn = PGPC;
+	}
+}
+
 class APGGameState* APGGameMode::GetGS() const
 {
 	if (CachedGS.IsValid() == false)
@@ -47,6 +58,7 @@ bool APGGameMode::TryPlacing(class APGPlayerController* InPC)
 
 void APGGameMode::GameOver()
 {
+	check(PlayerInTurn.IsValid());
 	GetGS()->Multicast_EndGame(PlayerInTurn->GetUniqueNetId());
 
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_TurnEnd);
